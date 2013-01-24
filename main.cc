@@ -5,21 +5,23 @@
 #include <random>
 #include <sstream>
 
-#define NUM_PARTICLES 25
-#define MAX_TIME 1000
-#define DT 1
+const unsigned NUM_PARTICLES = 25;
+const double MAX_TIME = 1000;
+const double DT = 1;
 
-#define EPSILON 0.001
+const double EPSILON = 0.001;
 
-#define ETA 0.05
-#define TAU 1.0
+const double ETA = 0.05;
+const double TAU = 1.0;
+
+const unsigned K = 3;
+const double C = 1.0;
 
 const double GAMMA[] = { 0.04, 0.1, 0.5 };
 
 // seed random number based on time
 std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
 std::uniform_real_distribution<double> init_pos_dist(0.0, 1.0);
-// TODO: bivariate
 std::normal_distribution<double> force_dist(0.0, TAU);
 
 struct Particle {
@@ -33,6 +35,25 @@ struct Particle {
 
 Particle P[NUM_PARTICLES];
 
+double R[K];
+
+void GenR() {
+  for (unsigned k = 0; k < K; ++k)
+    R[k] = force_dist(gen);
+}
+
+double g(double x) {
+  return C * exp(-(x*x));
+}
+
+double F(double r) {
+  double f = 0.0;
+  for (unsigned k = 0; k < K; ++k) {
+    f += g(r - k*EPSILON) * R[k];
+  }
+  return f;
+}
+
 void Init() {
   for (Particle& p : P)
     p.r = init_pos_dist(gen); //0.0;
@@ -42,8 +63,8 @@ void Run(double gamma) {
   std::cout << "running gamma: " << gamma << "\n";
   std::ostringstream suffix;
   suffix << ".G" << gamma << ".E" << EPSILON << ".P" << NUM_PARTICLES;
-  std::ofstream positions(("pos" + suffix.str()).c_str());
-  std::ofstream density(("dens" + suffix.str()).c_str());
+  std::ofstream positions(("out/pos" + suffix.str()).c_str());
+  std::ofstream density(("out/dens" + suffix.str()).c_str());
 
   unsigned i = 0;
   double t = 0.0;
@@ -52,12 +73,16 @@ void Run(double gamma) {
     density << ++i << " ";
     double min_pos = std::numeric_limits<double>::max();
     double max_pos = std::numeric_limits<double>::min();
+
+    // Build this frame's random number table.
+    GenR();
+
     // TODO: omp if necessary
     for (Particle& p : P) {
       // Velocity verlet
       const double half_v = p.v + p.a*DT/2;
+      const double force = EPSILON*F(p.r) - gamma*half_v*Particle::Mass;
       p.r += half_v*DT;
-      const double force = EPSILON*force_dist(gen) - gamma*half_v*Particle::Mass;
       p.a = force / Particle::Mass;
       p.v = half_v + p.a*DT/2;
 
