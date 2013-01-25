@@ -14,7 +14,7 @@ const double EPSILON = 0.001;
 const double ETA = 0.05;
 const double TAU = 1.0;
 
-const unsigned K = 3;
+const unsigned K = 100;
 const double C = 1.0;
 
 const double GAMMA[] = { 0.04, 0.1, 0.5 };
@@ -22,7 +22,8 @@ const double GAMMA[] = { 0.04, 0.1, 0.5 };
 // seed random number based on time
 std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
 std::uniform_real_distribution<double> init_pos_dist(0.0, 1.0);
-std::normal_distribution<double> force_dist(0.0, TAU);
+//std::normal_distribution<double> force_dist(0.0, TAU);
+std::uniform_real_distribution<double> force_dist(-1.0, 1.0);
 
 struct Particle {
   Particle() : r(0), v(0), a(0) { }
@@ -62,7 +63,7 @@ void Init() {
 void Run(double gamma) {
   std::cout << "running gamma: " << gamma << "\n";
   std::ostringstream suffix;
-  suffix << ".G" << gamma << ".E" << EPSILON << ".P" << NUM_PARTICLES;
+  suffix << ".G" << gamma << ".P" << NUM_PARTICLES;
   std::ofstream positions(("out/pos" + suffix.str()).c_str());
   std::ofstream density(("out/dens" + suffix.str()).c_str());
 
