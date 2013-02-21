@@ -22,6 +22,7 @@ const double GAMMA[] = { 0.04, 0.1, 0.5 };
 // seed random number based on time
 std::mt19937 gen(std::chrono::system_clock::now().time_since_epoch().count());
 std::uniform_real_distribution<double> init_pos_dist(0.0, 1.0);
+std::uniform_real_distribution<double> init_vel_dist(-0.001, 0.001);
 //std::normal_distribution<double> force_dist(0.0, TAU);
 std::uniform_real_distribution<double> force_dist(-1.0, 1.0);
 
@@ -49,15 +50,16 @@ double g(double x) {
 
 double F(double r) {
   double f = 0.0;
-  for (unsigned k = 0; k < K; ++k) {
+  for (unsigned k = 0; k < K; ++k)
     f += g(r - k*EPSILON) * R[k];
-  }
   return f;
 }
 
 void Init() {
-  for (Particle& p : P)
+  for (Particle& p : P) {
     p.r = init_pos_dist(gen); //0.0;
+    p.v = 0.0; //init_vel_dist(gen);
+  }
 }
 
 void Run(double gamma) {
